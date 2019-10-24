@@ -1,0 +1,20 @@
+unreserved = { ASCII_ALPHANUMERIC | "-" | "." | " " | "~" | ":" }
+pct_encoding = { "%" ~ ASCII_HEX_DIGIT{2} }
+
+expression = { "("? ~ (group ~ operator)* ~ group ~ ")"? }
+
+group = { "("? ~ constraint ~ ( operator ~ constraint )? ~ ")"? }
+
+operator = { and_op | or_op }
+and_op = { "," }
+or_op = { ";" }
+constraint  = { selector ~ comparison ~ argument }
+selector = { (unreserved | pct_encoding)+ }
+comparison = { (("=" ~ ASCII_ALPHA*) | fiql_delim) ~ "=" }
+argument = { arg_char+ }
+arg_char = { unreserved | pct_encoding | fiql_delim | "=" }
+fiql_delim  = {"!" | "$" | "'" | "*" | "+"}
+text_arg = { "*" ~ arg_char+ ~ "*" }
+number_arg = { ("+" | "-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+
+WHITESPACE = _{ " " | "\t" }
