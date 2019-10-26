@@ -14,9 +14,7 @@ pub enum Expr {
 
 impl Expr {
     pub fn boxed_item(
-        selector: &str,
-        comparision: &Comparison,
-        arguments: &[&str],
+        selector: &str, comparision: &Comparison, arguments: &[&str],
     ) -> ParserResult<Box<Expr>> {
         let res = Constraint::new(selector, comparision, arguments)?;
         Ok(Box::new(Expr::Item(res)))
@@ -34,26 +32,19 @@ mod tests {
 
     #[test]
     fn test_node() -> ParserResult<()> {
-        let const1 = Expr::Item(Constraint::new(
-            "select1",
-            &comparison::EQUAL as &Comparison,
-            &["test1a"],
-        )?);
-        let const2 = Expr::Item(Constraint::new(
-            "select2",
-            &comparison::NOT_EQUAL as &Comparison,
-            &["test2a"],
-        )?);
-        let const3 = Expr::Item(Constraint::new(
-            "select3",
-            &comparison::GREATER_THAN as &Comparison,
-            &["test3a"],
-        )?);
-        let const4 = Expr::Item(Constraint::new(
-            "select4",
-            &comparison::IN as &Comparison,
-            &["test4a", "test4b"],
-        )?);
+        let const1 =
+            Expr::Item(Constraint::new("select1", &comparison::EQUAL as &Comparison, &["test1a"])?);
+        let const2 =
+            Expr::Item(Constraint::new("select2", &comparison::NOT_EQUAL as &Comparison, &[
+                "test2a",
+            ])?);
+        let const3 =
+            Expr::Item(Constraint::new("select3", &comparison::GREATER_THAN as &Comparison, &[
+                "test3a",
+            ])?);
+        let const4 = Expr::Item(Constraint::new("select4", &comparison::IN as &Comparison, &[
+            "test4a", "test4b",
+        ])?);
 
         let node1 = Expr::Node(Operator::And, Box::new(const1), Box::new(const3));
         let node2 = Expr::Node(Operator::Or, Box::new(const2), Box::new(const4));

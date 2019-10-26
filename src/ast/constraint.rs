@@ -15,18 +15,12 @@ impl Constraint {
         if comparision.multi_values {
             let expect_args = "> 1".to_string();
             if arguments.len() <= 1 {
-                return Err(ParserError::InvalidConstraintArgs(
-                    expect_args,
-                    arguments.len(),
-                ));
+                return Err(ParserError::InvalidConstraintArgs(expect_args, arguments.len()));
             }
         } else {
             let expect_args = "== 1".to_string();
             if arguments.len() != 1 {
-                return Err(ParserError::InvalidConstraintArgs(
-                    expect_args,
-                    arguments.len(),
-                ));
+                return Err(ParserError::InvalidConstraintArgs(expect_args, arguments.len()));
             }
         }
 

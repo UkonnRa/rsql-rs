@@ -2,3 +2,14 @@ language: rust
 cache: cargo
 dist: xenial
 rust: nightly
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - cargo test --all
+    - stage: deploy-cargo
+      script:
+        - cargo publish --dry-run
+        - cargo publish --token "$CARGO_TOKEN"
+      if: tag IS present
