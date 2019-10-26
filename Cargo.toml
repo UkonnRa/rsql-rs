@@ -1,10 +1,14 @@
 [package]
 name = "rsql-rs"
 version = "0.1.0"
-authors = ["Yukun Luo <yukunl@nvidia.com>"]
+authors = ["Ukonn Ra <ukonnra@outlook.com>"]
 edition = "2018"
+repository = "https://github.com/UkonnRa/rsql-rs.git"
+homepage = "https://github.com/UkonnRa/rsql-rs"
+description = "A FIQL/RSQL parser written in Rust"
+license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["FIQL", "RSQL", "parser"]
 
 [dependencies]
 log = "~0.4"
@@ -21,3 +25,6 @@ strum_macros = "~0.16"
 regex = "1"
 lazy_static = "~1.4"
 frunk = "~0.3"
+
+serde = { version = "~1.0", features = ["derive"] }
+serde_json = "~1.0"

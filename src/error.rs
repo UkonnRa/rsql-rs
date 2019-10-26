@@ -1,4 +1,4 @@
-use crate::QueryType;
+use crate::{ParserResult, QueryType};
 use std::backtrace::Backtrace;
 use thiserror::Error;
 
@@ -21,11 +21,23 @@ pub enum ParserError {
     Unhandled(#[source] anyhow::Error),
 }
 
+impl ParserError {
+    pub fn invalid_pair_rule<T>() -> ParserResult<T> {
+        Err(ParserError::InvalidPairRule(Backtrace::capture()))
+    }
+}
+
 impl From<anyhow::Error> for ParserError {
     fn from(err: anyhow::Error) -> Self {
         match err.downcast::<ParserError>() {
             Ok(par_err) => par_err,
             Err(any_err) => ParserError::Unhandled(any_err),
         }
+    }
+}
+
+impl From<pest::error::Error<crate::parser::fiql::Rule>> for ParserError {
+    fn from(err: pest::error::Error<crate::parser::fiql::Rule>) -> Self {
+        ParserError::Unhandled(anyhow::Error::from(err))
     }
 }

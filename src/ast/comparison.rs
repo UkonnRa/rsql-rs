@@ -1,28 +1,23 @@
 use crate::error::ParserError;
 use crate::ParserResult;
-use pest::iterators::Pair;
-use pest::RuleType;
 use regex::RegexSet;
-use std::collections::HashSet;
-use std::convert::TryFrom;
-use std::iter::FromIterator;
+use serde::{Deserialize, Serialize};
 
 lazy_static! {
     static ref COMP_OP_RE: RegexSet = RegexSet::new(&[r"^=[a-zA-Z]*=$", r"^[<>]=?$"]).unwrap();
-    pub(crate) static ref EQUAL: Comparison = Comparison::new(&["=="], false).unwrap();
-    pub(crate) static ref NOT_EQUAL: Comparison = Comparison::new(&["!="], false).unwrap();
-    pub(crate) static ref GREATER_THAN: Comparison =
-        Comparison::new(&[">", "=gt="], false).unwrap();
-    pub(crate) static ref GREATER_THAN_OR_EQUAL: Comparison =
+    pub static ref EQUAL: Comparison = Comparison::new(&["=="], false).unwrap();
+    pub static ref NOT_EQUAL: Comparison = Comparison::new(&["!="], false).unwrap();
+    pub static ref GREATER_THAN: Comparison = Comparison::new(&[">", "=gt="], false).unwrap();
+    pub static ref GREATER_THAN_OR_EQUAL: Comparison =
         Comparison::new(&[">=", "=ge="], false).unwrap();
-    pub(crate) static ref LESS_THAN: Comparison = Comparison::new(&["<", "=lt="], false).unwrap();
-    pub(crate) static ref LESS_THAN_OR_EQUAL: Comparison =
+    pub static ref LESS_THAN: Comparison = Comparison::new(&["<", "=lt="], false).unwrap();
+    pub static ref LESS_THAN_OR_EQUAL: Comparison =
         Comparison::new(&["<=", "=le="], false).unwrap();
-    pub(crate) static ref IN: Comparison = Comparison::new(&["=in="], true).unwrap();
-    pub(crate) static ref OUT: Comparison = Comparison::new(&["=out="], true).unwrap();
+    pub static ref IN: Comparison = Comparison::new(&["=in="], true).unwrap();
+    pub static ref OUT: Comparison = Comparison::new(&["=out="], true).unwrap();
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
 pub struct Comparison {
     pub symbols: Vec<String>,
     pub multi_values: bool,
@@ -44,7 +39,7 @@ impl Comparison {
         if COMP_OP_RE.is_match(symbol) || symbol == "!=" {
             Ok(symbol.to_string())
         } else {
-            Err(ParserError::InvalidComparison(symbol.to_string()).into())
+            Err(ParserError::InvalidComparison(symbol.to_string()))
         }
     }
 }

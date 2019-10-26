@@ -1,12 +1,12 @@
-use crate::ast::comparison;
 use crate::ast::comparison::Comparison;
 use crate::ast::constraint::Constraint;
-use crate::ast::node::{Branch, Node};
+use crate::ast::expr::Expr;
+use crate::ast::{comparison, Operator};
 use crate::error::ParserError;
 use crate::parser::Parser;
 use crate::ParserResult;
 use pest::iterators::Pair;
-use std::backtrace::Backtrace;
+use pest::Parser as PestParser;
 use std::collections::{HashMap, HashSet};
 use std::convert::{TryFrom, TryInto};
 use std::iter::FromIterator;
@@ -35,8 +35,10 @@ pub struct FiqlParser;
 
 impl Parser for FiqlParser {
     type R = Rule;
-    fn parse_to_node(code: &str) -> ParserResult<Box<dyn Node>> {
-        unimplemented!()
+    fn parse_to_node(code: &str) -> ParserResult<Expr> {
+        let res = Self::parse(Rule::expression, &code)?.next().unwrap();
+        let res: Expr = res.try_into()?;
+        Ok(res)
     }
 
     fn default_comparisons() -> &'static HashMap<&'static str, &'static Comparison> {
@@ -57,7 +59,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Comparison {
                     Err(ParserError::InvalidComparison(comp_name.to_string()))
                 }
             }
-            rule => Err(ParserError::InvalidPairRule(Backtrace::capture())),
+            _ => ParserError::invalid_pair_rule()?,
         }
     }
 }
@@ -111,75 +113,128 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
                     arguments,
                 })
             }
-            rule => Err(ParserError::InvalidPairRule(Backtrace::capture())),
+            _ => ParserError::invalid_pair_rule()?,
         }
     }
 }
 
-impl<'i, T> TryFrom<Pair<'i, Rule>> for Branch<T>
-where
-    T: Node,
-{
+impl<'i> TryFrom<Pair<'i, Rule>> for Operator {
     type Error = ParserError;
 
     fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
-        for item in pairs.into_inner() {
-            match item.as_rule() {
-                Rule::group => {
-                    info!("in an group:");
-                    for part in item.into_inner() {
-                        info!("    part: {:?}", part);
-                        match Constraint::try_from(part) {
-                            Ok(res) => info!("res: {:?}", res),
-                            Err(err) => error!("err: {}", err),
-                        }
-                    }
+        match value.as_rule() {
+            Rule::operator => match value.into_inner().next() {
+                Some(pair) if pair.as_rule() == Rule::and_op => Ok(Operator::And),
+                Some(pair) if pair.as_rule() == Rule::or_op => Ok(Operator::Or),
+                _ => ParserError::invalid_pair_rule()?,
+            },
+            _ => ParserError::invalid_pair_rule()?,
+        }
+    }
+}
+
+impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
+    type Error = ParserError;
+
+    fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
+        let mut op_vec: Vec<Operator> = vec![];
+        let mut expr_vec: Vec<Expr> = vec![];
+
+        let mut parse_op = |pair: Pair<'i, Rule>| -> ParserResult<()> {
+            match pair.as_rule() {
+                Rule::operator if vec![",", "and"].contains(&pair.as_str()) => {
+                    op_vec.push(Operator::And)
                 }
-                Rule::operator => {
-                    for part in item.into_inner() {
-                        match part.as_rule() {
-                            Rule::and_op => info!("  AND!"),
-                            Rule::or_op => info!("  OR!"),
-                            _ => unreachable!(),
-                        }
-                    }
+                Rule::operator if vec![";", "or"].contains(&pair.as_str()) => {
+                    op_vec.push(Operator::Or)
                 }
-                _ => unreachable!(),
+                _ => ParserError::invalid_pair_rule()?,
             }
+            Ok(())
+        };
+
+        match value.as_rule() {
+            Rule::expression => {
+                for expr_item in value.into_inner() {
+                    match expr_item.as_rule() {
+                        Rule::constraint => expr_vec.push(Expr::Item(expr_item.try_into()?)),
+                        Rule::group => expr_vec.push(Expr::try_from(expr_item)?),
+                        Rule::operator => parse_op(expr_item)?,
+                        _ => ParserError::invalid_pair_rule()?,
+                    }
+                }
+            }
+            Rule::group => {
+                for group_item in value.into_inner() {
+                    match group_item.as_rule() {
+                        Rule::expression => expr_vec.push(Expr::try_from(group_item)?),
+                        Rule::operator => parse_op(group_item)?,
+                        _ => ParserError::invalid_pair_rule()?,
+                    }
+                }
+            }
+            _ => ParserError::invalid_pair_rule()?,
+        }
+
+        while let Some(top_op) = op_vec.pop() {
+            if expr_vec.len() < 2 {
+                ParserError::invalid_pair_rule()?
+            } else {
+                let right = expr_vec.pop().unwrap();
+                let left = expr_vec.pop().unwrap();
+                expr_vec.push(Expr::Node(top_op, Box::new(left), Box::new(right)));
+            }
+        }
+
+        if op_vec.is_empty() && expr_vec.len() == 1 {
+            Ok(expr_vec.pop().unwrap())
+        } else {
+            ParserError::invalid_pair_rule()?
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::constraint::Constraint;
-    use crate::ast::node::Node;
-    use crate::error::ParserError;
+    use crate::ast::comparison::*;
+    use crate::ast::expr::Expr;
+    use crate::ast::Operator;
     use crate::parser::fiql::*;
     use crate::parser::Parser;
-    use crate::{ParserResult, QueryType};
-    use log::*;
-    use pest::Parser as PestParser;
-    use std::backtrace::Backtrace;
-    use std::convert::TryFrom;
+    use crate::ParserResult;
 
     #[test]
     fn default_fiql_map_test() -> ParserResult<()> {
         let _ = env_logger::builder().is_test(true).try_init();
-
         let _ = FiqlParser::default_comparisons();
         Ok(())
     }
 
     #[test]
-    fn fiql_parser_test() -> ParserResult<()> {
-        let _ = env_logger::builder().is_test(true).try_init();
+    fn test_parser() -> ParserResult<()> {
+        let code = "updated == 2003-12-13T18:30:02Z ; ( director == Christopher%20Nolan,  (actor== *Bale ; year =ge= 1.234 ) , content==*just%20the%20start*)";
+        let actor_year = Expr::Node(
+            Operator::Or,
+            Expr::boxed_item("actor", &EQUAL as &Comparison, &["*Bale"])?,
+            Expr::boxed_item("year", &GREATER_THAN_OR_EQUAL as &Comparison, &["1.234"])?,
+        );
+        let res = Expr::Node(
+            Operator::And,
+            Box::new(actor_year),
+            Expr::boxed_item("content", &EQUAL as &Comparison, &["*just%20the%20start*"])?,
+        );
+        let res = Expr::Node(
+            Operator::And,
+            Expr::boxed_item("director", &EQUAL as &Comparison, &["Christopher%20Nolan"])?,
+            Box::new(res),
+        );
+        let res = Expr::Node(
+            Operator::Or,
+            Expr::boxed_item("updated", &EQUAL as &Comparison, &["2003-12-13T18:30:02Z"])?,
+            Box::new(res),
+        );
 
-        let mut stack: Vec<Box<dyn Node>> = vec![];
-        let code = " (updated == 2003-12-13T18:30:02Z);(director==Christopher Nolan,actor==*Bale);year=ge=1.234,(content==*just%20the%20start*)";
-        let pairs = FiqlParser::parse(Rule::expression, code)?
-            .next()
-            .ok_or_else(|| ParserError::InvalidQuery(QueryType::Fiql, Backtrace::capture()))?;
+        assert_eq!(FiqlParser::parse_to_node(&code)?, res);
 
         Ok(())
     }

@@ -1,8 +1,9 @@
 use crate::ast::comparison::Comparison;
 use crate::error::ParserError;
 use crate::ParserResult;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Constraint {
     pub selector: String,
     pub comparison: Comparison,
@@ -14,16 +15,18 @@ impl Constraint {
         if comparision.multi_values {
             let expect_args = "> 1".to_string();
             if arguments.len() <= 1 {
-                return Err(
-                    ParserError::InvalidConstraintArgs(expect_args, arguments.len()).into(),
-                );
+                return Err(ParserError::InvalidConstraintArgs(
+                    expect_args,
+                    arguments.len(),
+                ));
             }
         } else {
             let expect_args = "== 1".to_string();
             if arguments.len() != 1 {
-                return Err(
-                    ParserError::InvalidConstraintArgs(expect_args, arguments.len()).into(),
-                );
+                return Err(ParserError::InvalidConstraintArgs(
+                    expect_args,
+                    arguments.len(),
+                ));
             }
         }
 

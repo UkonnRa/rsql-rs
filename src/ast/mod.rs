@@ -1,8 +1,10 @@
 pub mod comparison;
 pub mod constraint;
-pub mod node;
+pub mod expr;
 
-#[derive(Debug, PartialEq, Eq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Operator {
     And,
     Or,
