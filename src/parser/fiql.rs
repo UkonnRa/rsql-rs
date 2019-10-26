@@ -35,6 +35,7 @@ pub struct FiqlParser;
 
 impl Parser for FiqlParser {
     type R = Rule;
+
     fn parse_to_node(code: &str) -> ParserResult<Expr> {
         let res = Self::parse(Rule::expression, &code)?.next().unwrap();
         let res: Expr = res.try_into()?;
@@ -58,7 +59,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Comparison {
                 } else {
                     Err(ParserError::InvalidComparison(comp_name.to_string()))
                 }
-            }
+            },
             _ => ParserError::invalid_pair_rule()?,
         }
     }
@@ -79,7 +80,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
                         Rule::selector => selector_opt = Some(item.as_str().to_string()),
                         Rule::comparison => comparison_opt = item.try_into().ok(),
                         Rule::argument => arguments_opt = Some(item.as_str().to_string()),
-                        _ => {}
+                        _ => {},
                     }
                 }
                 let selector = if let Some(selector) = selector_opt {
@@ -107,12 +108,8 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
                     });
                 };
 
-                Ok(Constraint {
-                    selector,
-                    comparison,
-                    arguments,
-                })
-            }
+                Ok(Constraint { selector, comparison, arguments })
+            },
             _ => ParserError::invalid_pair_rule()?,
         }
     }
@@ -144,10 +141,10 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
             match pair.as_rule() {
                 Rule::operator if vec![",", "and"].contains(&pair.as_str()) => {
                     op_vec.push(Operator::And)
-                }
+                },
                 Rule::operator if vec![";", "or"].contains(&pair.as_str()) => {
                     op_vec.push(Operator::Or)
-                }
+                },
                 _ => ParserError::invalid_pair_rule()?,
             }
             Ok(())
@@ -163,7 +160,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
                         _ => ParserError::invalid_pair_rule()?,
                     }
                 }
-            }
+            },
             Rule::group => {
                 for group_item in value.into_inner() {
                     match group_item.as_rule() {
@@ -172,7 +169,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
                         _ => ParserError::invalid_pair_rule()?,
                     }
                 }
-            }
+            },
             _ => ParserError::invalid_pair_rule()?,
         }
 
@@ -212,7 +209,8 @@ mod tests {
 
     #[test]
     fn test_parser() -> ParserResult<()> {
-        let code = "updated == 2003-12-13T18:30:02Z ; ( director == Christopher%20Nolan,  (actor== *Bale ; year =ge= 1.234 ) , content==*just%20the%20start*)";
+        let code = "updated == 2003-12-13T18:30:02Z ; ( director == Christopher%20Nolan,  \
+                    (actor== *Bale ; year =ge= 1.234 ) , content==*just%20the%20start*)";
         let actor_year = Expr::Node(
             Operator::Or,
             Expr::boxed_item("actor", &EQUAL as &Comparison, &["*Bale"])?,

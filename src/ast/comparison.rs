@@ -29,10 +29,7 @@ impl Comparison {
             .iter()
             .map(|&sym| Self::is_valid_symbol(sym))
             .collect::<ParserResult<Vec<String>>>()?;
-        Ok(Comparison {
-            symbols,
-            multi_values,
-        })
+        Ok(Comparison { symbols, multi_values })
     }
 
     fn is_valid_symbol(symbol: &str) -> ParserResult<String> {

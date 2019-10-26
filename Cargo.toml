@@ -1,11 +1,11 @@
 [package]
 name = "rsql-rs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ukonn Ra <ukonnra@outlook.com>"]
 edition = "2018"
 repository = "https://github.com/UkonnRa/rsql-rs.git"
 homepage = "https://github.com/UkonnRa/rsql-rs"
-description = "A FIQL/RSQL parser written in Rust"
+description = "A FIQL/RSQL parser written in Rust and Pest"
 license = "MIT"
 
 keywords = ["FIQL", "RSQL", "parser"]
