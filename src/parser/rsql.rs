@@ -20,6 +20,8 @@ lazy_static! {
             &comparison::GREATER_THAN_OR_EQUAL as &'static Comparison,
             &comparison::LESS_THAN as &'static Comparison,
             &comparison::LESS_THAN_OR_EQUAL as &'static Comparison,
+            &comparison::IN as &'static Comparison,
+            &comparison::OUT as &'static Comparison,
         ]);
         let tuple_vec: Vec<(&'static str, &'static Comparison)> = tuple_vec
             .iter()
@@ -30,10 +32,10 @@ lazy_static! {
 }
 
 #[derive(Parser)]
-#[grammar = "fiql.pest"]
-pub struct FiqlParser;
+#[grammar = "rsql.pest"]
+pub struct RsqlParser;
 
-impl Parser for FiqlParser {
+impl Parser for RsqlParser {
     type R = Rule;
 
     fn parse_to_node(code: &str) -> ParserResult<Expr> {
@@ -47,6 +49,59 @@ impl Parser for FiqlParser {
     }
 }
 
+impl<'i> TryFrom<Pair<'i, Rule>> for Arguments {
+    type Error = ParserError;
+
+    fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
+        println!("  value: {:?}", value);
+
+        match value.as_rule() {
+            Rule::argument => {
+                let mut args = vec![];
+                for arg_item in value.into_inner() {
+                    let item_rules = arg_item.as_rule();
+                    let args_inner = arg_item.into_inner();
+                    match item_rules {
+                        Rule::value => {
+                            for arg_inner in args_inner {
+                                match arg_inner.as_rule() {
+                                    Rule::unreserved_str => {
+                                        for unreserved_inner in arg_inner.into_inner() {
+                                            if unreserved_inner.as_rule() == Rule::unreserved_inner
+                                            {
+                                                args.push(unreserved_inner.as_str().to_string());
+                                            }
+                                        }
+                                    },
+                                    Rule::double_quoted => {
+                                        for double_inner in arg_inner.into_inner() {
+                                            if double_inner.as_rule() == Rule::double_quoted_inner {
+                                                args.push(double_inner.as_str().to_string());
+                                            }
+                                        }
+                                    },
+                                    Rule::single_quoted => {
+                                        for single_inner in arg_inner.into_inner() {
+                                            if single_inner.as_rule() == Rule::single_quoted_inner {
+                                                args.push(single_inner.as_str().to_string());
+                                            }
+                                        }
+                                    },
+                                    _ => ParserError::invalid_pair_rule()?,
+                                }
+                            }
+                        },
+                        _ => ParserError::invalid_pair_rule()?,
+                    }
+                }
+
+                Ok(Arguments(args))
+            },
+            _ => ParserError::invalid_pair_rule()?,
+        }
+    }
+}
+
 impl<'i> TryFrom<Pair<'i, Rule>> for Comparison {
     type Error = ParserError;
 
@@ -54,7 +109,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Comparison {
         match value.as_rule() {
             Rule::comparison => {
                 let comp_name = value.as_str();
-                if let Some(&comp) = FiqlParser::default_comparisons().get(comp_name) {
+                if let Some(&comp) = RsqlParser::default_comparisons().get(comp_name) {
                     Ok(comp.clone())
                 } else {
                     Err(ParserError::InvalidComparison(comp_name.to_string()))
@@ -71,7 +126,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
     fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
         let mut selector_opt: Option<String> = None;
         let mut comparison_opt: Option<Comparison> = None;
-        let mut arguments_opt: Option<String> = None;
+        let mut arguments_opt: Option<Arguments> = None;
 
         match value.as_rule() {
             Rule::constraint => {
@@ -79,7 +134,10 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
                     match item.as_rule() {
                         Rule::selector => selector_opt = Some(item.as_str().to_string()),
                         Rule::comparison => comparison_opt = item.try_into().ok(),
-                        Rule::argument => arguments_opt = Some(item.as_str().to_string()),
+                        Rule::argument => {
+                            println!("arguments: {:?}", item);
+                            arguments_opt = item.try_into().ok()
+                        },
                         _ => {},
                     }
                 }
@@ -100,7 +158,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Constraint {
                     });
                 };
                 let arguments = if let Some(arguments) = arguments_opt {
-                    Arguments(vec![arguments])
+                    arguments
                 } else {
                     return Err(ParserError::LackOfField {
                         ty: "Constraint".to_string(),
@@ -193,14 +251,14 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::fiql::*;
+    use crate::parser::rsql::*;
     use crate::parser::Parser;
     use crate::ParserResult;
 
     #[test]
-    fn default_fiql_map_test() -> ParserResult<()> {
+    fn default_rsql_map_test() -> ParserResult<()> {
         let _ = env_logger::builder().is_test(true).try_init();
-        let _ = FiqlParser::default_comparisons();
+        let _ = RsqlParser::default_comparisons();
         Ok(())
     }
 }

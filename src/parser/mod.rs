@@ -5,6 +5,7 @@ use pest::RuleType;
 use std::collections::HashMap;
 
 pub mod fiql;
+pub mod rsql;
 
 pub trait Parser {
     type R: RuleType;
