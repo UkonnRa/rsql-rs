@@ -9,6 +9,8 @@ extern crate strum_macros;
 
 use crate::error::ParserError;
 
+#[macro_use]
+pub mod macros;
 pub mod ast;
 pub mod error;
 pub mod parser;

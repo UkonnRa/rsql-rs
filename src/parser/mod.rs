@@ -14,3 +14,5 @@ pub trait Parser {
 
     fn default_comparisons() -> &'static HashMap<&'static str, &'static Comparison>;
 }
+
+
