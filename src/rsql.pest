@@ -1,5 +1,5 @@
 reserved = @{"\"" | "'" | "(" | ")" | ";" | "," | "=" | "!" | "~" | "<" | ">"}
-unreserved = @{ ASCII_ALPHANUMERIC | "_" | "." | "-" | "*" }
+unreserved = @{ !(reserved | " ") ~ ANY }
 
 expression = { ((constraint | group) ~ operator)* ~ (constraint | group) }
 group = { "(" ~ (expression ~ operator)* ~ expression ~ ")" }

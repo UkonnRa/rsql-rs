@@ -3,6 +3,7 @@ use rsql_rs::ast::comparison::*;
 use rsql_rs::ast::expr::Expr;
 use rsql_rs::ast::Operator;
 use rsql_rs::parser::fiql::*;
+use rsql_rs::parser::rsql::RsqlParser;
 use rsql_rs::parser::Parser;
 
 #[test]
@@ -20,6 +21,8 @@ fn test_simple() -> anyhow::Result<()> {
     );
 
     assert_eq!(FiqlParser::parse_to_node(&code)?, node);
+    assert_eq!(RsqlParser::parse_to_node(&code)?, node);
+
     Ok(())
 }
 
@@ -28,6 +31,7 @@ fn test_date() -> anyhow::Result<()> {
     let code = "updated==2003-12-13T18:30:02Z";
     let node = Expr::boxed_item("updated", &EQUAL as &Comparison, &["2003-12-13T18:30:02Z"])?;
     assert_eq!(Box::new(FiqlParser::parse_to_node(&code)?), node);
+    assert_eq!(Box::new(RsqlParser::parse_to_node(&code)?), node);
     Ok(())
 }
 
@@ -36,6 +40,7 @@ fn test_number() -> anyhow::Result<()> {
     let code = "x:foo=gt=500";
     let node = Expr::boxed_item("x:foo", &GREATER_THAN as &Comparison, &["500"])?;
     assert_eq!(Box::new(FiqlParser::parse_to_node(&code)?), node);
+    assert_eq!(Box::new(RsqlParser::parse_to_node(&code)?), node);
     Ok(())
 }
 
@@ -43,6 +48,7 @@ fn test_number() -> anyhow::Result<()> {
 fn test_parentheses_lacking() -> anyhow::Result<()> {
     let code = "(lack==of_paren";
     assert!(FiqlParser::parse_to_node(&code).is_err());
+    assert!(RsqlParser::parse_to_node(&code).is_err());
     Ok(())
 }
 
@@ -66,20 +72,24 @@ fn test_invalid_selector() -> anyhow::Result<()> {
 fn test_invalid_comparison() -> anyhow::Result<()> {
     let code = "key=!=value";
     assert!(FiqlParser::parse_to_node(&code).is_err());
+    assert!(RsqlParser::parse_to_node(&code).is_err());
     let code = "key=~=value";
     assert!(FiqlParser::parse_to_node(&code).is_err());
+    assert!(RsqlParser::parse_to_node(&code).is_err());
     let code = "key=notfound=value";
     assert!(FiqlParser::parse_to_node(&code).is_err());
+    assert!(RsqlParser::parse_to_node(&code).is_err());
     let code = "key<>=value";
     assert!(FiqlParser::parse_to_node(&code).is_err());
+    assert!(RsqlParser::parse_to_node(&code).is_err());
 
     Ok(())
 }
 
 #[test]
 fn test_complex() -> anyhow::Result<()> {
-    let code = "updated == 2003-12-13T18:30:02Z ; ( director == Christopher%20Nolan,  (actor== \
-                *Bale ; year =ge= 1.234 ) , content==*just%20the%20start*)";
+    let code = "updated==2003-12-13T18:30:02Z;(director==Christopher%20Nolan,(actor==*Bale;\
+                year=ge=1.234),content==*just%20the%20start*)";
     let actor_year = Expr::Node(
         Operator::And,
         Expr::boxed_item("actor", &EQUAL as &Comparison, &["*Bale"])?,
@@ -102,6 +112,7 @@ fn test_complex() -> anyhow::Result<()> {
     );
 
     assert_eq!(FiqlParser::parse_to_node(&code)?, res);
+    assert_eq!(RsqlParser::parse_to_node(&code)?, res);
 
     Ok(())
 }

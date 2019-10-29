@@ -13,7 +13,3 @@ comparison = @{ (("=" ~ ASCII_ALPHA*) | fiql_delim) ~ "=" }
 argument = @{ arg_char+ }
 arg_char = @{ unreserved | pct_encoding | fiql_delim | "=" }
 fiql_delim  = @{"!" | "$" | "'" | "*" | "+"}
-// text_arg = @{ "*" ~ arg_char+ ~ "*" }
-// number_arg = { ("+" | "-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
-
-WHITESPACE = _{ " " | "\t" }

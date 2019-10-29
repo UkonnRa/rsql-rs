@@ -1,9 +1,9 @@
 #[macro_export]
 macro_rules! gen_parser_to_node {
     () => {
-        fn parse_to_node(code: &str) -> ParserResult<Expr> {
+        fn parse_to_node(code: &str) -> crate::ParserResult<Expr> {
             let res = Self::parse(Rule::expression, &code)?.next().unwrap();
-            let res: Expr = res.try_into()?;
+            let res: crate::ast::expr::Expr = res.try_into()?;
             Ok(res)
         }
     };
@@ -12,31 +12,39 @@ macro_rules! gen_parser_to_node {
 #[macro_export]
 macro_rules! gen_parser {
     ($class_name:ident) => {
-        impl<'i> TryFrom<Pair<'i, Rule>> for Comparison {
-            type Error = ParserError;
+        impl<'i> std::convert::TryFrom<pest::iterators::Pair<'i, Rule>>
+            for crate::ast::comparison::Comparison
+        {
+            type Error = crate::error::ParserError;
 
-            fn try_from(value: Pair<Rule>) -> Result<Self, Self::Error> {
+            fn try_from(
+                value: pest::iterators::Pair<Rule>,
+            ) -> std::result::Result<Self, Self::Error> {
                 match value.as_rule() {
                     Rule::comparison => {
                         let comp_name = value.as_str();
                         if let Some(&comp) = $class_name::default_comparisons().get(comp_name) {
                             Ok(comp.clone())
                         } else {
-                            Err(ParserError::InvalidComparison(comp_name.to_string()))
+                            Err(crate::error::ParserError::InvalidComparison(comp_name.to_string()))
                         }
                     },
-                    _ => ParserError::invalid_pair_rule()?,
+                    _ => crate::error::ParserError::invalid_pair_rule()?,
                 }
             }
         }
 
-        impl<'i> TryFrom<Pair<'i, Rule>> for crate::ast::constraint::Constraint {
-            type Error = ParserError;
+        impl<'i> std::convert::TryFrom<pest::iterators::Pair<'i, Rule>>
+            for crate::ast::constraint::Constraint
+        {
+            type Error = crate::error::ParserError;
 
-            fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
-                let mut selector_opt: Option<String> = None;
-                let mut comparison_opt: Option<Comparison> = None;
-                let mut arguments_opt: Option<Arguments> = None;
+            fn try_from(
+                value: pest::iterators::Pair<'i, Rule>,
+            ) -> std::result::Result<Self, Self::Error> {
+                let mut selector_opt: std::option::Option<String> = None;
+                let mut comparison_opt: std::option::Option<Comparison> = None;
+                let mut arguments_opt: std::option::Option<Arguments> = None;
 
                 match value.as_rule() {
                     Rule::constraint => {
@@ -75,15 +83,17 @@ macro_rules! gen_parser {
 
                         Ok(crate::ast::constraint::Constraint { selector, comparison, arguments })
                     },
-                    _ => ParserError::invalid_pair_rule()?,
+                    _ => crate::error::ParserError::invalid_pair_rule()?,
                 }
             }
         }
 
-        impl<'i> TryFrom<Pair<'i, Rule>> for crate::ast::Operator {
-            type Error = ParserError;
+        impl<'i> std::convert::TryFrom<pest::iterators::Pair<'i, Rule>> for crate::ast::Operator {
+            type Error = crate::error::ParserError;
 
-            fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
+            fn try_from(
+                value: pest::iterators::Pair<'i, Rule>,
+            ) -> std::result::Result<Self, Self::Error> {
                 match value.as_rule() {
                     Rule::operator => match value.into_inner().next() {
                         Some(pair) if pair.as_rule() == Rule::and_op => {
@@ -97,25 +107,28 @@ macro_rules! gen_parser {
             }
         }
 
-        impl<'i> TryFrom<Pair<'i, Rule>> for Expr {
-            type Error = ParserError;
+        impl<'i> std::convert::TryFrom<pest::iterators::Pair<'i, Rule>> for crate::ast::expr::Expr {
+            type Error = crate::error::ParserError;
 
-            fn try_from(value: Pair<'i, Rule>) -> Result<Self, Self::Error> {
-                let mut op_vec: Vec<crate::ast::Operator> = vec![];
-                let mut expr_vec: Vec<Expr> = vec![];
+            fn try_from(
+                value: pest::iterators::Pair<'i, Rule>,
+            ) -> std::result::Result<Self, Self::Error> {
+                let mut op_vec: std::vec::Vec<crate::ast::Operator> = vec![];
+                let mut expr_vec: std::vec::Vec<Expr> = vec![];
 
-                let mut parse_op = |pair: Pair<'i, Rule>| -> ParserResult<()> {
-                    match pair.as_rule() {
-                        Rule::operator if vec![";", "and"].contains(&pair.as_str()) => {
-                            op_vec.push(crate::ast::Operator::And)
-                        },
-                        Rule::operator if vec![",", "or"].contains(&pair.as_str()) => {
-                            op_vec.push(crate::ast::Operator::Or)
-                        },
-                        _ => ParserError::invalid_pair_rule()?,
-                    }
-                    Ok(())
-                };
+                let mut parse_op =
+                    |pair: pest::iterators::Pair<'i, Rule>| -> crate::ParserResult<()> {
+                        match pair.as_rule() {
+                            Rule::operator if vec![";", "and"].contains(&pair.as_str()) => {
+                                op_vec.push(crate::ast::Operator::And)
+                            },
+                            Rule::operator if vec![",", "or"].contains(&pair.as_str()) => {
+                                op_vec.push(crate::ast::Operator::Or)
+                            },
+                            _ => crate::error::ParserError::invalid_pair_rule()?,
+                        }
+                        Ok(())
+                    };
 
                 match value.as_rule() {
                     Rule::expression => {
@@ -126,7 +139,7 @@ macro_rules! gen_parser {
                                 },
                                 Rule::group => expr_vec.push(Expr::try_from(expr_item)?),
                                 Rule::operator => parse_op(expr_item)?,
-                                _ => ParserError::invalid_pair_rule()?,
+                                _ => crate::error::ParserError::invalid_pair_rule()?,
                             }
                         }
                     },
@@ -135,27 +148,31 @@ macro_rules! gen_parser {
                             match group_item.as_rule() {
                                 Rule::expression => expr_vec.push(Expr::try_from(group_item)?),
                                 Rule::operator => parse_op(group_item)?,
-                                _ => ParserError::invalid_pair_rule()?,
+                                _ => crate::error::ParserError::invalid_pair_rule()?,
                             }
                         }
                     },
-                    _ => ParserError::invalid_pair_rule()?,
+                    _ => crate::error::ParserError::invalid_pair_rule()?,
                 }
 
                 while let Some(top_op) = op_vec.pop() {
                     if expr_vec.len() < 2 {
-                        ParserError::invalid_pair_rule()?
+                        crate::error::ParserError::invalid_pair_rule()?
                     } else {
                         let right = expr_vec.pop().unwrap();
                         let left = expr_vec.pop().unwrap();
-                        expr_vec.push(Expr::Node(top_op, Box::new(left), Box::new(right)));
+                        expr_vec.push(crate::ast::expr::Expr::Node(
+                            top_op,
+                            Box::new(left),
+                            Box::new(right),
+                        ));
                     }
                 }
 
                 if op_vec.is_empty() && expr_vec.len() == 1 {
                     Ok(expr_vec.pop().unwrap())
                 } else {
-                    ParserError::invalid_pair_rule()?
+                    crate::error::ParserError::invalid_pair_rule()?
                 }
             }
         }
