@@ -1,0 +1,39 @@
+reserved = @{"\"" | "'" | "(" | ")" | ";" | "," | "=" | "!" | "~" | "<" | ">"}
+unreserved = @{ !(reserved | " ") ~ ANY }
+
+expression = { ((constraint | group) ~ operator)* ~ (constraint | group) }
+group = { "(" ~ (expression ~ operator)* ~ expression ~ ")" }
+
+operator = @{ and_op | or_op }
+and_op = @{ ";" | "and" }
+or_op = @{ "," | "or" }
+constraint  = { selector ~ comparison ~ argument }
+selector = @{ unreserved+ }
+
+comparison = @{ comp_alt | comp_fiql }
+comp_fiql = @{ ((("=" ~ ASCII_ALPHA*) | "!") ~ "=")}
+comp_alt = @{ ("<" | ">") ~ "="? }
+
+argument = { "(" ~ (value ~ ",")* ~ value ~ ")" | value }
+value = @{ unreserved_str | double_quoted | single_quoted }
+
+unreserved_str = ${ unreserved_inner }
+unreserved_inner = @{ unreserved+ }
+
+double_quoted = ${ "\"" ~ double_quoted_inner ~ "\"" }
+double_quoted_inner = @{ double_quoted_char* }
+double_quoted_char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+single_quoted = ${ "'" ~ single_quoted_inner ~ "'" }
+single_quoted_inner = @{ single_quoted_char* }
+single_quoted_char = {
+    !("'" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+WHITESPACE = _{ " " | "\t" }

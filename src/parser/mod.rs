@@ -5,6 +5,7 @@ use pest::RuleType;
 use std::collections::HashMap;
 
 pub mod fiql;
+pub mod rsql;
 
 pub trait Parser {
     type R: RuleType;
@@ -13,3 +14,5 @@ pub trait Parser {
 
     fn default_comparisons() -> &'static HashMap<&'static str, &'static Comparison>;
 }
+
+

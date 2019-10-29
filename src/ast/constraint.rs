@@ -4,10 +4,13 @@ use crate::ParserResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Arguments(pub Vec<String>);
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Constraint {
     pub selector: String,
     pub comparison: Comparison,
-    pub arguments: Vec<String>,
+    pub arguments: Arguments,
 }
 
 impl Constraint {
@@ -27,7 +30,7 @@ impl Constraint {
         Ok(Constraint {
             selector: selector.to_string(),
             comparison: comparision.clone(),
-            arguments: arguments.iter().map(ToString::to_string).collect(),
+            arguments: Arguments(arguments.iter().map(ToString::to_string).collect()),
         })
     }
 }
