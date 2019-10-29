@@ -41,3 +41,9 @@ impl From<pest::error::Error<crate::parser::fiql::Rule>> for ParserError {
         ParserError::Unhandled(anyhow::Error::from(err))
     }
 }
+
+impl From<pest::error::Error<crate::parser::rsql::Rule>> for ParserError {
+    fn from(err: pest::error::Error<crate::parser::rsql::Rule>) -> Self {
+        ParserError::Unhandled(anyhow::Error::from(err))
+    }
+}
