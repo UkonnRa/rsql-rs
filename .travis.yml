@@ -1,13 +1,13 @@
 language: rust
 cache: cargo
 dist: xenial
-rust: nightly
+rust: stable
 
 jobs:
   include:
     - stage: test
       script:
-        - cargo test --all
+        - bash scripts/clean-test.sh
     - stage: deploy-cargo
       script:
         - cargo publish --dry-run

@@ -1,5 +1,5 @@
-use crate::ast::comparison::Comparison;
 use crate::error::ParserError;
+use crate::Comparison;
 use crate::ParserResult;
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +14,8 @@ pub struct Constraint {
 }
 
 impl Constraint {
-    pub fn new(selector: &str, comparision: &Comparison, arguments: &[&str]) -> ParserResult<Self> {
-        if comparision.multi_values {
+    pub fn new(selector: &str, comparison: Comparison, arguments: &[&str]) -> ParserResult<Self> {
+        if comparison.multi_values {
             let expect_args = "> 1".to_string();
             if arguments.len() <= 1 {
                 return Err(ParserError::InvalidConstraintArgs(expect_args, arguments.len()));
@@ -29,7 +29,7 @@ impl Constraint {
 
         Ok(Constraint {
             selector: selector.to_string(),
-            comparison: comparision.clone(),
+            comparison,
             arguments: Arguments(arguments.iter().map(ToString::to_string).collect()),
         })
     }
@@ -37,15 +37,13 @@ impl Constraint {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::comparison;
     use crate::ast::comparison::Comparison;
     use crate::ast::constraint::Constraint;
     use crate::ParserResult;
 
     #[test]
     fn test_new() -> ParserResult<()> {
-        let comp_eq: &Comparison = &comparison::EQUAL as &Comparison;
-        let constraint = Constraint::new("name", comp_eq, &["new_name"])?;
+        let constraint = Constraint::new("name", Comparison::EQUAL(), &["new_name"])?;
         println!("{:?}", constraint);
         Ok(())
     }

@@ -1,16 +1,15 @@
 use crate::{ParserResult, QueryType};
-use std::backtrace::Backtrace;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ParserError {
     #[error("Invalid Pair Rule found")]
-    InvalidPairRule(Backtrace),
+    InvalidPairRule(),
 
     #[error("Invalid Comparison found: {0}")]
     InvalidComparison(String),
     #[error("Invalid Query found: {0}")]
-    InvalidQuery(QueryType, Backtrace),
+    InvalidQuery(QueryType),
 
     #[error("Invalid Constraint arguments: expect: {0}, found: {1}")]
     InvalidConstraintArgs(String, usize),
@@ -23,7 +22,7 @@ pub enum ParserError {
 
 impl ParserError {
     pub fn invalid_pair_rule<T>() -> ParserResult<T> {
-        Err(ParserError::InvalidPairRule(Backtrace::capture()))
+        Err(ParserError::InvalidPairRule())
     }
 }
 
