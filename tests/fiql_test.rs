@@ -131,33 +131,3 @@ fn test_complex() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-#[test]
-fn test_complex() -> anyhow::Result<()> {
-    let code = "updated == 2003-12-13T18:30:02Z ; ( director == Christopher%20Nolan,  (actor== \
-                *Bale ; year =ge= 1.234 ) , content==*just%20the%20start*)";
-    let actor_year = Expr::Node(
-        Operator::And,
-        Expr::boxed_item("actor", &EQUAL as &Comparison, &["*Bale"])?,
-        Expr::boxed_item("year", &GREATER_THAN_OR_EQUAL as &Comparison, &["1.234"])?,
-    );
-    let res = Expr::Node(
-        Operator::Or,
-        Box::new(actor_year),
-        Expr::boxed_item("content", &EQUAL as &Comparison, &["*just%20the%20start*"])?,
-    );
-    let res = Expr::Node(
-        Operator::Or,
-        Expr::boxed_item("director", &EQUAL as &Comparison, &["Christopher%20Nolan"])?,
-        Box::new(res),
-    );
-    let res = Expr::Node(
-        Operator::And,
-        Expr::boxed_item("updated", &EQUAL as &Comparison, &["2003-12-13T18:30:02Z"])?,
-        Box::new(res),
-    );
-
-    assert_eq!(FiqlParser::parse_to_node(&code)?, res);
-
-    Ok(())
-}
