@@ -3,18 +3,24 @@ use crate::ParserResult;
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 
+macro_rules! default_comparisons {
+    ($name:ident, $multi:expr, $($symbol:expr),+) => {
+        #[allow(non_snake_case)]
+        pub fn $name() -> Comparison {
+            Comparison::new(&[$($symbol),+], $multi).unwrap()
+        }
+    };
+    ( $($name:ident, $multi:expr, [$($symbol:expr),+];)+ ) => {
+        impl Comparison {
+            $(
+                default_comparisons!($name, $multi, $($symbol),+);
+            )+
+        }
+    }
+}
+
 lazy_static! {
     static ref COMP_OP_RE: RegexSet = RegexSet::new(&[r"^=[a-zA-Z]*=$", r"^[<>]=?$"]).unwrap();
-    pub static ref EQUAL: Comparison = Comparison::new(&["=="], false).unwrap();
-    pub static ref NOT_EQUAL: Comparison = Comparison::new(&["!="], false).unwrap();
-    pub static ref GREATER_THAN: Comparison = Comparison::new(&[">", "=gt="], false).unwrap();
-    pub static ref GREATER_THAN_OR_EQUAL: Comparison =
-        Comparison::new(&[">=", "=ge="], false).unwrap();
-    pub static ref LESS_THAN: Comparison = Comparison::new(&["<", "=lt="], false).unwrap();
-    pub static ref LESS_THAN_OR_EQUAL: Comparison =
-        Comparison::new(&["<=", "=le="], false).unwrap();
-    pub static ref IN: Comparison = Comparison::new(&["=in="], true).unwrap();
-    pub static ref OUT: Comparison = Comparison::new(&["=out="], true).unwrap();
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
@@ -39,6 +45,17 @@ impl Comparison {
             Err(ParserError::InvalidComparison(symbol.to_string()))
         }
     }
+}
+
+default_comparisons! {
+    EQUAL, false, ["=="];
+    NOT_EQUAL, false, ["!="];
+    GREATER_THAN, false, [">", "=gt="];
+    GREATER_THAN_OR_EQUAL, false, [">=", "=ge="];
+    LESS_THAN, false, ["<", "=lt="];
+    LESS_THAN_OR_EQUAL, false, ["<=", "=le="];
+    IN, true, ["=in="];
+    OUT, true, ["=out="];
 }
 
 #[cfg(test)]

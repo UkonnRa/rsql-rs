@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2019-11-22
+### Added
+- Make `Parser` able to register their own `Comparison`
+
+### Changed
+- The name of crate from `rsql-rs` to `rsql`
+- The structure of Project, eliminate the `ast` layer
 
 ## [0.2.0] - 2019-10-29
 ### Added
