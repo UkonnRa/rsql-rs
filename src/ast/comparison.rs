@@ -25,8 +25,14 @@ lazy_static! {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
 pub struct Comparison {
-    pub symbols: Vec<String>,
-    pub multi_values: bool,
+    pub(crate) symbols: Vec<String>,
+    pub(crate) multi_values: bool,
+}
+
+impl ToString for Comparison {
+    fn to_string(&self) -> String {
+        self.symbols.first().unwrap().clone()
+    }
 }
 
 impl Comparison {
@@ -35,6 +41,9 @@ impl Comparison {
             .iter()
             .map(|&sym| Self::is_valid_symbol(sym))
             .collect::<ParserResult<Vec<String>>>()?;
+        if symbols.is_empty() {
+            return Err(ParserError::EmptySymbol());
+        }
         Ok(Comparison { symbols, multi_values })
     }
 
@@ -45,15 +54,25 @@ impl Comparison {
             Err(ParserError::InvalidComparison(symbol.to_string()))
         }
     }
+
+    #[allow(dead_code)]
+    fn get_symbols(&self) -> &[String] {
+        &self.symbols
+    }
+
+    #[allow(dead_code)]
+    fn is_multi(&self) -> bool {
+        self.multi_values
+    }
 }
 
 default_comparisons! {
     EQUAL, false, ["=="];
     NOT_EQUAL, false, ["!="];
-    GREATER_THAN, false, [">", "=gt="];
-    GREATER_THAN_OR_EQUAL, false, [">=", "=ge="];
-    LESS_THAN, false, ["<", "=lt="];
-    LESS_THAN_OR_EQUAL, false, ["<=", "=le="];
+    GREATER_THAN, false, ["=gt=", ">"];
+    GREATER_THAN_OR_EQUAL, false, ["=ge=", ">="];
+    LESS_THAN, false, ["=lt=", "<"];
+    LESS_THAN_OR_EQUAL, false, ["=le=", "<="];
     IN, true, ["=in="];
     OUT, true, ["=out="];
 }

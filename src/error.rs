@@ -3,6 +3,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ParserError {
+    #[error("Empty symbol array when creating a new Comparison")]
+    EmptySymbol(),
+
     #[error("Invalid Pair Rule found")]
     InvalidPairRule(),
 

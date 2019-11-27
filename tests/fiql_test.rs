@@ -24,6 +24,8 @@ fn test_simple() -> anyhow::Result<()> {
 
     assert_eq!(fiql_parser.parse_to_node(&code)?, node);
     assert_eq!(rsql_parser.parse_to_node(&code)?, node);
+    assert_eq!(node.to_string(), code);
+    assert_eq!(rsql_parser.parse_to_node(&node.to_string())?, node);
 
     Ok(())
 }
@@ -37,6 +39,9 @@ fn test_date() -> anyhow::Result<()> {
     let node = Expr::boxed_item("updated", Comparison::EQUAL(), &["2003-12-13T18:30:02Z"])?;
     assert_eq!(Box::new(fiql_parser.parse_to_node(&code)?), node);
     assert_eq!(Box::new(rsql_parser.parse_to_node(&code)?), node);
+    assert_eq!(node.to_string(), code);
+    assert_eq!(&rsql_parser.parse_to_node(&node.to_string())?, node.as_ref());
+
     Ok(())
 }
 
@@ -48,6 +53,8 @@ fn test_number() -> anyhow::Result<()> {
     let node = Expr::boxed_item("x:foo", Comparison::GREATER_THAN(), &["500"])?;
     assert_eq!(Box::new(fiql_parser.parse_to_node(&code)?), node);
     assert_eq!(Box::new(rsql_parser.parse_to_node(&code)?), node);
+    assert_eq!(node.to_string(), code);
+    assert_eq!(&rsql_parser.parse_to_node(&node.to_string())?, node.as_ref());
     Ok(())
 }
 
@@ -112,13 +119,13 @@ fn test_complex() -> anyhow::Result<()> {
     );
     let res = Expr::Node(
         Operator::Or,
+        Expr::boxed_item("director", Comparison::EQUAL(), &["Christopher%20Nolan"])?,
         Box::new(actor_year),
-        Expr::boxed_item("content", Comparison::EQUAL(), &["*just%20the%20start*"])?,
     );
     let res = Expr::Node(
         Operator::Or,
-        Expr::boxed_item("director", Comparison::EQUAL(), &["Christopher%20Nolan"])?,
         Box::new(res),
+        Expr::boxed_item("content", Comparison::EQUAL(), &["*just%20the%20start*"])?,
     );
     let res = Expr::Node(
         Operator::And,
@@ -128,6 +135,7 @@ fn test_complex() -> anyhow::Result<()> {
 
     assert_eq!(fiql_parser.parse_to_node(&code)?, res);
     assert_eq!(rsql_parser.parse_to_node(&code)?, res);
+    assert_eq!(res.to_string(), "updated==2003-12-13T18:30:02Z;((director==Christopher%20Nolan,(actor==*Bale;year=ge=1.234)),content==*just%20the%20start*)");
 
     Ok(())
 }
