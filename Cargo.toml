@@ -21,6 +21,7 @@ anyhow = "~1.0"
 thiserror = "~1.0"
 strum = "~0.16"
 strum_macros = "~0.16"
+itertools = "~0.8"
 
 regex = "1"
 lazy_static = "~1.4"

@@ -12,6 +12,34 @@ pub enum Expr {
     Node(Operator, Box<Expr>, Box<Expr>),
 }
 
+impl ToString for Expr {
+    fn to_string(&self) -> String {
+        match &self {
+            Expr::Item(cons) => cons.to_string(),
+            Expr::Node(op, left, right) => {
+                let op_str = match op {
+                    Operator::And => ";",
+                    Operator::Or => ",",
+                };
+                match (left.as_ref(), right.as_ref()) {
+                    (Expr::Item(left), Expr::Item(right)) => {
+                        format!("{}{}{}", left.to_string(), op_str, right.to_string())
+                    }
+                    (left @ Expr::Node(_, _, _), Expr::Item(right)) => {
+                        format!("({}){}{}", left.to_string(), op_str, right.to_string())
+                    }
+                    (Expr::Item(left), right @ Expr::Node(_, _, _)) => {
+                        format!("{}{}({})", left.to_string(), op_str, right.to_string())
+                    }
+                    (left, right) => {
+                        format!("({}){}({})", left.to_string(), op_str, right.to_string())
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl Expr {
     pub fn boxed_item(
         selector: &str, comparison: Comparison, arguments: &[&str],
@@ -41,7 +69,12 @@ mod tests {
 
         let node1 = Expr::Node(Operator::And, Box::new(const1), Box::new(const3));
         let node2 = Expr::Node(Operator::Or, Box::new(const2), Box::new(const4));
-        let _root = Expr::Node(Operator::And, Box::new(node1), Box::new(node2));
+        let root = Expr::Node(Operator::And, Box::new(node1), Box::new(node2));
+
+        assert_eq!(
+            root.to_string(),
+            "(select1==test1a;select3=gt=test3a);(select2!=test2a,select4=in=(test4a,test4b))"
+        );
 
         Ok(())
     }

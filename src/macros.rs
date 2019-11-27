@@ -131,17 +131,17 @@ macro_rules! gen_basic_parser {
         }
 
         fn parse_expr(&self, value: pest::iterators::Pair<Self::R>) -> crate::ParserResult<crate::Expr> {
-            let mut op_vec: std::vec::Vec<crate::Operator> = vec![];
-            let mut expr_vec: std::vec::Vec<crate::Expr> = vec![];
+            let mut op_vec: std::collections::VecDeque<crate::Operator> = Default::default();
+            let mut expr_vec: std::collections::VecDeque<crate::Expr> = Default::default();
 
             let mut parse_op =
                 |pair: pest::iterators::Pair<Rule>| -> crate::ParserResult<()> {
                     match pair.as_rule() {
                         Rule::operator if vec![";", "and"].contains(&pair.as_str()) => {
-                            op_vec.push(crate::Operator::And)
+                            op_vec.push_back(crate::Operator::And)
                         }
                         Rule::operator if vec![",", "or"].contains(&pair.as_str()) => {
-                            op_vec.push(crate::Operator::Or)
+                            op_vec.push_back(crate::Operator::Or)
                         }
                         _ => crate::error::ParserError::invalid_pair_rule()?,
                     }
@@ -153,9 +153,9 @@ macro_rules! gen_basic_parser {
                     for expr_item in value.into_inner() {
                         match expr_item.as_rule() {
                             Rule::constraint => {
-                                expr_vec.push(crate::Expr::Item(self.parse_constraint(expr_item)?))
+                                expr_vec.push_back(crate::Expr::Item(self.parse_constraint(expr_item)?))
                             }
-                            Rule::group => expr_vec.push(self.parse_expr(expr_item)?),
+                            Rule::group => expr_vec.push_back(self.parse_expr(expr_item)?),
                             Rule::operator => parse_op(expr_item)?,
                             _ => crate::error::ParserError::invalid_pair_rule()?,
                         }
@@ -164,7 +164,7 @@ macro_rules! gen_basic_parser {
                 Rule::group => {
                     for group_item in value.into_inner() {
                         match group_item.as_rule() {
-                            Rule::expression => expr_vec.push(self.parse_expr(group_item)?),
+                            Rule::expression => expr_vec.push_back(self.parse_expr(group_item)?),
                             Rule::operator => parse_op(group_item)?,
                             _ => crate::error::ParserError::invalid_pair_rule()?,
                         }
@@ -173,13 +173,13 @@ macro_rules! gen_basic_parser {
                 _ => crate::error::ParserError::invalid_pair_rule()?,
             }
 
-            while let Some(top_op) = op_vec.pop() {
+            while let Some(top_op) = op_vec.pop_front() {
                 if expr_vec.len() < 2 {
                     crate::error::ParserError::invalid_pair_rule()?
                 } else {
-                    let right = expr_vec.pop().unwrap();
-                    let left = expr_vec.pop().unwrap();
-                    expr_vec.push(crate::ast::expr::Expr::Node(
+                    let left = expr_vec.pop_front().unwrap();
+                    let right = expr_vec.pop_front().unwrap();
+                    expr_vec.push_front(crate::ast::expr::Expr::Node(
                         top_op,
                         Box::new(left),
                         Box::new(right),
@@ -188,7 +188,7 @@ macro_rules! gen_basic_parser {
             }
 
             if op_vec.is_empty() && expr_vec.len() == 1 {
-                Ok(expr_vec.pop().unwrap())
+                Ok(expr_vec.pop_front().unwrap())
             } else {
                 crate::error::ParserError::invalid_pair_rule()?
             }
