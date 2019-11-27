@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2019-11-28
+### Added
+- `ToString` for all ast components
+
 ## [0.3.0] - 2019-11-22
 ### Added
 - Make `Parser` able to register their own `Comparison`
