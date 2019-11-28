@@ -26,13 +26,13 @@ impl ToString for Expr {
                         format!("{}{}{}", left.to_string(), op_str, right.to_string())
                     }
                     (left @ Expr::Node(_, _, _), Expr::Item(right)) => {
-                        format!("({}){}{}", left.to_string(), op_str, right.to_string())
+                        format!("{}{}{}", left.to_string(), op_str, right.to_string())
                     }
                     (Expr::Item(left), right @ Expr::Node(_, _, _)) => {
                         format!("{}{}({})", left.to_string(), op_str, right.to_string())
                     }
                     (left, right) => {
-                        format!("({}){}({})", left.to_string(), op_str, right.to_string())
+                        format!("{}{}({})", left.to_string(), op_str, right.to_string())
                     }
                 }
             }
@@ -73,7 +73,7 @@ mod tests {
 
         assert_eq!(
             root.to_string(),
-            "(select1==test1a;select3=gt=test3a);(select2!=test2a,select4=in=(test4a,test4b))"
+            "select1==test1a;select3=gt=test3a;(select2!=test2a,select4=in=(test4a,test4b))"
         );
 
         Ok(())
