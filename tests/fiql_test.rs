@@ -135,7 +135,7 @@ fn test_complex() -> anyhow::Result<()> {
 
     assert_eq!(fiql_parser.parse_to_node(&code)?, res);
     assert_eq!(rsql_parser.parse_to_node(&code)?, res);
-    assert_eq!(res.to_string(), "updated==2003-12-13T18:30:02Z;((director==Christopher%20Nolan,(actor==*Bale;year=ge=1.234)),content==*just%20the%20start*)");
+    assert_eq!(res.to_string(), code);
 
     Ok(())
 }
