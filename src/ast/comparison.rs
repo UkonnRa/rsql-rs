@@ -55,13 +55,11 @@ impl Comparison {
         }
     }
 
-    #[allow(dead_code)]
-    fn get_symbols(&self) -> &[String] {
+    pub fn get_symbols(&self) -> &[String] {
         &self.symbols
     }
 
-    #[allow(dead_code)]
-    fn is_multi(&self) -> bool {
+    pub fn is_multi(&self) -> bool {
         self.multi_values
     }
 }
