@@ -5,7 +5,7 @@ use crate::ParserResult;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(tag = "@type", content = "@data")]
 pub enum Expr {
     Item(Constraint),

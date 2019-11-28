@@ -4,7 +4,7 @@ use crate::ParserResult;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Arguments(pub Vec<String>);
 
 static RESERVED_CHARS: &[char] = &['"', '\'', '(', ')', ';', ',', '=', '!', '~', '<', '>', ' '];
@@ -47,7 +47,7 @@ impl ToString for Arguments {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Constraint {
     pub selector: String,
     pub comparison: Comparison,
