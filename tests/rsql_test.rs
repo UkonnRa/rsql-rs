@@ -47,17 +47,14 @@ fn test_array() -> anyhow::Result<()> {
         Expr::boxed_item("year", Comparison::GREATER_THAN_OR_EQUAL(), &["2000"])?,
     );
 
+    let code = r#"genres=in=(sci-fi,action) and (director=='Christopher Nolan' or actor==*Bale) and year>=2000"#;
+    assert_eq!(parser.parse_to_node(&code)?, node);
+
     let code =
         r#"genres=in=(sci-fi,action);(director=='Christopher Nolan',actor==*Bale);year=ge=2000"#;
     assert_eq!(parser.parse_to_node(&code)?, node);
 
-    let code = r#"genres=in=(sci-fi,action) and (director=='Christopher Nolan' or actor==*Bale) and year>=2000"#;
-    assert_eq!(parser.parse_to_node(&code)?, node);
-
-    assert_eq!(
-        node.to_string(),
-        r#"(genres=in=(sci-fi,action);(director=='Christopher Nolan',actor==*Bale));year=ge=2000"#
-    );
+    assert_eq!(node.to_string(), code);
     assert_eq!(parser.parse_to_node(&node.to_string())?, node);
 
     Ok(())
@@ -82,7 +79,7 @@ fn test_sub_fields() -> anyhow::Result<()> {
     let code = r#"director.lastName==Nolan and year>=2000 and year<2010"#;
     assert_eq!(parser.parse_to_node(&code)?, node);
 
-    assert_eq!(node.to_string(), r#"(director.lastName==Nolan;year=ge=2000);year=lt=2010"#);
+    assert_eq!(node.to_string(), r#"director.lastName==Nolan;year=ge=2000;year=lt=2010"#);
     assert_eq!(parser.parse_to_node(&node.to_string())?, node);
 
     Ok(())
@@ -108,10 +105,7 @@ fn test_double_array() -> anyhow::Result<()> {
     let code =
         r#"genres=in=(sci-fi,action);genres=out=(romance,animated,horror),director==Que*Tarantino"#;
     assert_eq!(parser.parse_to_node(&code)?, node);
-    assert_eq!(
-        node.to_string(),
-        r#"(genres=in=(sci-fi,action);genres=out=(romance,animated,horror)),director==Que*Tarantino"#
-    );
+    assert_eq!(node.to_string(), code);
     assert_eq!(parser.parse_to_node(&node.to_string())?, node);
 
     Ok(())
