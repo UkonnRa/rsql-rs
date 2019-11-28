@@ -1,6 +1,6 @@
 [package]
 name = "rsql"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Ukonn Ra <ukonnra@outlook.com>"]
 edition = "2018"
 repository = "https://github.com/UkonnRa/rsql-rs.git"
