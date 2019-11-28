@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-## [0.4.0] - 2019-11-29
+## [0.4.2] - 2019-11-29
+### Changed
+- Pub usable functions
+
+## [0.4.1] - 2019-11-29
 ### Changed
 - Remove unnecessary brackets
 
