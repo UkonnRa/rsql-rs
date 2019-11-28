@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
-## [0.4.2] - 2019-11-29
+## [0.4.3] - 2019-11-28
+### Changed
+- Impl `Clone` trait for ast components
+
+## [0.4.2] - 2019-11-28
 ### Changed
 - Pub usable functions
 
-## [0.4.1] - 2019-11-29
+## [0.4.1] - 2019-11-28
 ### Changed
 - Remove unnecessary brackets
 
